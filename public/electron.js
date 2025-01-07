@@ -1,43 +1,56 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
+const WebSocket = require('ws');
 
 let mainWindow;
+let wsClient;
+
+function connectToDevServer() {
+  wsClient = new WebSocket('ws://127.0.0.1:3000/ws');
+  
+  wsClient.on('message', (data) => {
+    try {
+      const message = JSON.parse(data);
+      if (message.type === 'hash' || message.type === 'still-ok') {
+        createWindow();
+      }
+    } catch (err) {
+      console.log('WebSocket message:', data.toString());
+    }
+  });
+
+  wsClient.on('error', () => {
+    setTimeout(connectToDevServer, 1000);
+  });
+}
 
 function createWindow() {
+  if (mainWindow) return;
+
   mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false
-    }
+    },
+    show: false
   });
 
-  // Load the React app
-  mainWindow.loadURL('http://localhost:3000');
+  mainWindow.loadURL('http://127.0.0.1:3000')
+    .then(() => mainWindow.show())
+    .catch(() => app.quit());
 
-  // Handle window close
   mainWindow.on('closed', () => {
     mainWindow = null;
+    if (wsClient) wsClient.close();
     app.quit();
   });
 }
 
-// Create window when app is ready
-app.whenReady().then(createWindow);
+app.whenReady().then(connectToDevServer);
 
-// Quit when all windows are closed
 app.on('window-all-closed', () => {
-  app.quit();
-});
-
-// Handle any errors
-app.on('render-process-gone', (event, webContents, details) => {
-  console.error('Render process gone:', details.reason);
-  app.quit();
-});
-
-process.on('uncaughtException', (error) => {
-  console.error('Uncaught exception:', error);
+  if (wsClient) wsClient.close();
   app.quit();
 }); 
