@@ -4,17 +4,18 @@
   "private": true,
   "main": "public/electron.js",
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "electron-dev": "electron ."
+    "start": "concurrently -k \"cross-env BROWSER=none react-scripts start\" \"npx electron .\""
   },
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-scripts": "5.0.1"
+    "react-scripts": "^5.0.1"
   },
   "devDependencies": {
-    "electron": "^25.3.1"
+    "concurrently": "^8.2.0",
+    "cross-env": "^7.0.3",
+    "electron": "^25.3.1",
+    "wait-on": "^8.0.1"
   },
   "browserslist": {
     "production": [
@@ -28,4 +29,4 @@
       "last 1 safari version"
     ]
   }
-} 
+}
