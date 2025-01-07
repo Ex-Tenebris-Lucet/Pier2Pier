@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import './App.css';
 
 function App() {
   const [username, setUsername] = useState('');
@@ -10,71 +11,35 @@ function App() {
   };
 
   return (
-    <div style={{ 
-      height: '100vh', 
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center',
-      backgroundColor: '#282c34'
-    }}>
-      <form 
-        onSubmit={handleSubmit}
-        style={{
-          padding: '20px',
-          backgroundColor: 'white',
-          borderRadius: '8px',
-          minWidth: '300px'
-        }}
-      >
-        <h1 style={{ 
-          textAlign: 'center',
-          marginBottom: '20px',
-          color: '#282c34'
-        }}>
-          Pier2Pier
-        </h1>
+    <div className="app-container">
+      <form className="login-form" onSubmit={handleSubmit}>
+        <h1 className="title">Pier2Pier</h1>
         
-        <div style={{ marginBottom: '15px' }}>
+        <div className="input-group">
           <input
             type="text"
+            className="input-field"
+            placeholder="Username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder="Username"
-            style={{
-              width: '100%',
-              padding: '8px',
-              borderRadius: '4px',
-              border: '1px solid #ccc'
-            }}
+            autoFocus
           />
         </div>
 
-        <div style={{ marginBottom: '15px' }}>
+        <div className="input-group">
           <input
             type="password"
+            className="input-field"
+            placeholder="Key"
             value={key}
             onChange={(e) => setKey(e.target.value)}
-            placeholder="Key"
-            style={{
-              width: '100%',
-              padding: '8px',
-              borderRadius: '4px',
-              border: '1px solid #ccc'
-            }}
           />
         </div>
 
-        <button 
+        <button
           type="submit"
-          style={{
-            width: '100%',
-            padding: '8px',
-            backgroundColor: '#61dafb',
-            border: 'none',
-            borderRadius: '4px',
-            color: 'white',
-            cursor: 'pointer'
-          }}
+          className="login-button"
+          disabled={!username || !key}
         >
           Login
         </button>
