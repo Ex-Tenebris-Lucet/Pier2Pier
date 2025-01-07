@@ -34,7 +34,14 @@ function createWindow() {
       nodeIntegration: true,
       contextIsolation: false
     },
-    show: false
+    show: false,
+    backgroundColor: '#36393f',
+    frame: false,
+    titleBarStyle: 'hidden',
+    titleBarOverlay: {
+      color: '#2f3136',
+      symbolColor: '#dcddde'
+    }
   });
 
   mainWindow.loadURL('http://127.0.0.1:3000')
