@@ -5,13 +5,12 @@
   "main": "public/electron.js",
   "scripts": {
     "start": "concurrently -k \"cross-env BROWSER=none react-scripts start\" \"npx electron .\"",
-    "build": "react-scripts build"
+    "build": "react-scripts build",
+    "postinstall": "electron-builder install-app-deps && electron-rebuild",
+    "rebuild": "electron-rebuild"
   },
   "dependencies": {
-    "@emotion/react": "^11.11.1",
-    "@emotion/styled": "^11.11.1",
-    "@mui/material": "^5.14.11",
-    "@mui/icons-material": "^5.14.11",
+    "better-sqlite3": "^8.7.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "^5.0.1",
@@ -20,7 +19,9 @@
   "devDependencies": {
     "concurrently": "^8.2.0",
     "cross-env": "^7.0.3",
-    "electron": "^25.3.1"
+    "electron": "^28.1.0",
+    "electron-builder": "^24.9.1",
+    "electron-rebuild": "^3.2.9"
   },
   "browserslist": {
     "production": [
