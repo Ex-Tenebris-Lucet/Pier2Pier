@@ -27,3 +27,8 @@ yarn-error.log*
 .vscode/
 *.swp
 *.swo 
+
+# Database files
+/data
+*.db
+*.db-* 
