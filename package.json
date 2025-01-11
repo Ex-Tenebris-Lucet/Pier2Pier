@@ -4,8 +4,8 @@
   "private": true,
   "main": "public/electron.js",
   "scripts": {
-    "start": "concurrently -k \"cross-env BROWSER=none react-scripts start\" \"npx electron .\"",
-    "build": "react-scripts build",
+    "start": "concurrently -k \"cross-env BROWSER=none PORT=%npm_config_port% react-app-rewired start\" \"npx electron . --port=%npm_config_port%\"",
+    "build": "react-app-rewired build",
     "postinstall": "electron-builder install-app-deps && electron-rebuild",
     "rebuild": "electron-rebuild"
   },
@@ -14,14 +14,20 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "^5.0.1",
+    "simple-peer": "^9.11.1",
     "ws": "^8.14.2"
   },
   "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "buffer": "^6.0.3",
     "concurrently": "^8.2.0",
     "cross-env": "^7.0.3",
     "electron": "^28.1.0",
     "electron-builder": "^24.9.1",
-    "electron-rebuild": "^3.2.9"
+    "electron-rebuild": "^3.2.9",
+    "process": "^0.11.10",
+    "react-app-rewired": "^2.2.1",
+    "stream-browserify": "^3.0.0"
   },
   "browserslist": {
     "production": [

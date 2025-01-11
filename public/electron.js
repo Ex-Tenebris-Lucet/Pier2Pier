@@ -4,10 +4,19 @@ const WebSocket = require('ws');
 const Database = require('better-sqlite3');
 const fs = require('fs');
 const crypto = require('crypto');
+const https = require('https');
 
 let mainWindow;
 let wsClient;
 let db;
+
+// Get port from command line arguments, default to 3000
+const port = process.argv.find(arg => arg.startsWith('--port='))
+  ? parseInt(process.argv.find(arg => arg.startsWith('--port=')).split('=')[1])
+  : 3000;
+
+// Update the URL to use the specified port
+const appUrl = `http://127.0.0.1:${port}`;
 
 // Security utility functions
 const security = {
@@ -94,8 +103,7 @@ function initUserDatabase(username) {
     db = new Database(dbPath, { 
       readonly: false,
       fileMustExist: false,
-      timeout: 5000,
-      verbose: console.log
+      timeout: 5000
     });
     
     // Enable WAL mode for better concurrency and reliability
@@ -182,7 +190,7 @@ ipcMain.handle('database-query', async (event, sql, params) => {
 });
 
 function connectToDevServer() {
-  wsClient = new WebSocket('ws://127.0.0.1:3000/ws');
+  wsClient = new WebSocket(`ws://127.0.0.1:${port}/ws`);
   
   wsClient.on('message', (data) => {
     try {
@@ -196,7 +204,7 @@ function connectToDevServer() {
   });
 
   wsClient.on('error', () => {
-    setTimeout(connectToDevServer, 1000);
+    setTimeout(() => connectToDevServer(), 1000);
   });
 }
 
@@ -218,12 +226,16 @@ function createWindow() {
     show: false,
     backgroundColor: '#36393f',
     frame: false,
+    title: 'Pier2Pier',
     titleBarStyle: 'hidden',
     titleBarOverlay: {
       color: '#2f3136',
       symbolColor: '#dcddde'
     }
   });
+
+  // Pass port to renderer process
+  ipcMain.handle('get-port', () => port);
 
   ipcMain.on('resize-window', (event, width, height) => {
     if (event.sender !== mainWindow.webContents) {
@@ -251,7 +263,7 @@ function createWindow() {
     });
   }
 
-  mainWindow.loadURL('http://127.0.0.1:3000')
+  mainWindow.loadURL(appUrl)
     .then(() => {
       mainWindow.show();
       mainWindow.webContents.send('app-ready');
@@ -261,8 +273,10 @@ function createWindow() {
   mainWindow.on('closed', () => {
     mainWindow = null;
     if (wsClient) wsClient.close();
-    closeDatabase();
-    app.quit();
+    cleanupDatabase().then(() => {
+      closeDatabase();
+      app.quit();
+    });
   });
 }
 
@@ -270,8 +284,10 @@ app.whenReady().then(connectToDevServer);
 
 app.on('window-all-closed', () => {
   if (wsClient) wsClient.close();
-  closeDatabase();
-  app.quit();
+  cleanupDatabase().then(() => {
+    closeDatabase();
+    app.quit();
+  });
 });
 
 // Message handling functions
@@ -407,7 +423,87 @@ async function deleteConversation(peerAddress) {
   }
 }
 
+// Clean up empty database on logout
+async function cleanupDatabase() {
+  if (!db) return;
+
+  try {
+    // Check if there are any peers or messages
+    const peerCount = db.prepare('SELECT COUNT(*) as count FROM peers').get().count;
+    const messageCount = db.prepare('SELECT COUNT(*) as count FROM messages').get().count;
+
+    if (peerCount === 0 && messageCount === 0) {
+      const dbPath = db.name;
+      closeDatabase();
+      
+      // Delete the main database file and its WAL files
+      const filesToDelete = [
+        dbPath,
+        `${dbPath}-wal`,
+        `${dbPath}-shm`
+      ];
+      
+      filesToDelete.forEach(file => {
+        if (fs.existsSync(file)) {
+          fs.unlinkSync(file);
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Failed to cleanup database:', error);
+  }
+}
+
 // Add handler for conversation deletion
 ipcMain.handle('delete-conversation', async (event, peerAddress) => {
   return deleteConversation(peerAddress);
+});
+
+// Add handler for logout cleanup
+ipcMain.handle('cleanup-database', async () => {
+  return cleanupDatabase();
+});
+
+// Function to get public IP using a public API
+async function getPublicIP() {
+  return new Promise((resolve, reject) => {
+    // Try primary service first (ipify)
+    https.get('https://api.ipify.org', (resp) => {
+      let data = '';
+      
+      resp.on('data', (chunk) => {
+        data += chunk;
+      });
+      
+      resp.on('end', () => {
+        resolve(data.trim());
+      });
+    }).on('error', () => {
+      // If primary fails, try backup service (icanhazip)
+      https.get('https://icanhazip.com', (resp) => {
+        let data = '';
+        
+        resp.on('data', (chunk) => {
+          data += chunk;
+        });
+        
+        resp.on('end', () => {
+          resolve(data.trim());
+        });
+      }).on('error', (err) => {
+        reject(err);
+      });
+    });
+  });
+}
+
+// Add IPC handler for getting public IP
+ipcMain.handle('get-public-ip', async () => {
+  try {
+    const ip = await getPublicIP();
+    return { success: true, ip };
+  } catch (error) {
+    console.error('Failed to get public IP:', error);
+    return { success: false, error: error.message };
+  }
 }); 

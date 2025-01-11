@@ -90,6 +90,11 @@ contextBridge.exposeInMainWorld(
       ipcRenderer.send('resize-window', validDimensions.width, validDimensions.height);
     },
 
+    // Get port number
+    getPort: async () => {
+      return await ipcRenderer.invoke('get-port');
+    },
+
     // Database operations
     database: {
       init: async (username) => {
@@ -119,6 +124,9 @@ contextBridge.exposeInMainWorld(
         const validAddress = validateInput.peerAddress(peerAddress);
         return await ipcRenderer.invoke('delete-conversation', validAddress);
       },
+      cleanup: async () => {
+        return await ipcRenderer.invoke('cleanup-database');
+      },
       inspect: async () => {
         return await ipcRenderer.invoke('inspect-database');
       }
@@ -130,6 +138,12 @@ contextBridge.exposeInMainWorld(
         throw new Error('Callback must be a function');
       }
       ipcRenderer.on('app-ready', callback);
+    },
+
+    network: {
+      getPublicIP: async () => {
+        return await ipcRenderer.invoke('get-public-ip');
+      }
     }
   }
 ); 
